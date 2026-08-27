@@ -1,0 +1,15 @@
+{
+  "name": "cloud-functions-test",
+  "version": "1.0.0",
+  "description": "云函数本地测试",
+  "scripts": {
+    "test": "node test.js",
+    "test:create": "node test.js createOrder",
+    "test:cancel": "node test.js cancelOrder",
+    "test:shoplist": "node test.js getShopList",
+    "test:shopproducts": "node test.js getShopProducts"
+  },
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
