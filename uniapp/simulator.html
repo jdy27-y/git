@@ -268,6 +268,17 @@
         <div class="page-container" id="order-detail"></div>
       </div>
 
+      <!-- ===== 商家登录页 ===== -->
+      <div class="page" id="page-merchant-login">
+        <div class="page-container" id="merchant-login-content"></div>
+      </div>
+
+      <!-- ===== 商家管理页 ===== -->
+      <div class="page" id="page-merchant">
+        <div class="page-container" id="merchant-content"></div>
+        <div class="tabbar" id="merchant-tabbar"></div>
+      </div>
+
       <!-- ===== 个人中心页 ===== -->
       <div class="page" id="page-user">
         <div class="page-container">
@@ -283,6 +294,9 @@
             <div class="menu-item"><span class="menu-icon">🔔</span><span class="menu-text">消息通知</span><span class="menu-arrow">›</span></div>
             <div class="menu-item"><span class="menu-icon">📞</span><span class="menu-text">联系客服</span><span class="menu-arrow">›</span></div>
             <div class="menu-item"><span class="menu-icon">📍</span><span class="menu-text">常用地址</span><span class="menu-arrow">›</span></div>
+          </div>
+          <div class="card" style="padding:0">
+            <div class="menu-item" onclick="goMerchantLogin()"><span class="menu-icon">🏪</span><span class="menu-text">我是商家</span><span class="menu-arrow">›</span></div>
           </div>
           <div class="card" style="padding:0">
             <div class="menu-item"><span class="menu-icon">ℹ️</span><span class="menu-text">关于我们</span><span class="menu-arrow">›</span></div>
@@ -335,6 +349,8 @@ let currentPage = 'index';
 let pageHistory = [];
 let currentShopId = null;
 let orderFilter = '';
+let merchantShopId = null; // 商家绑定的店铺ID
+let merchantTab = 'orders'; // 商家当前tab
 
 // ===== 页面切换 =====
 function showPage(name) {
@@ -636,6 +652,240 @@ function fmtDate(d) {
   if (!d) return '';
   const date = new Date(d);
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+}
+
+// ===== 商家管理端 =====
+function goMerchantLogin() {
+  pageHistory.push('user');
+  if (merchantShopId) {
+    goMerchantDashboard();
+    return;
+  }
+  let html = `
+    <div class="card" style="text-align:center;padding:30px">
+      <div style="font-size:48px;margin-bottom:12px">🏪</div>
+      <div style="font-size:18px;font-weight:bold;margin-bottom:8px">商家入驻</div>
+      <div style="font-size:13px;color:#666;margin-bottom:20px">输入商家ID绑定您的店铺</div>
+      <div style="background:#f5f5f5;border-radius:10px;padding:12px 16px;margin-bottom:12px">
+        <div style="font-size:12px;color:#999;margin-bottom:4px">可测试的商家ID</div>
+        <div style="font-size:13px">s1 = 张记包子铺 &nbsp; s2 = 李氏粥铺 &nbsp; s4 = 晨曦早点</div>
+      </div>
+      <div class="input-row" style="margin-bottom:16px">
+        <input type="text" id="merchant-id-input" placeholder="请输入商家ID（如 s1）" style="width:100%">
+      </div>
+      <button class="submit-btn" onclick="bindMerchant()">绑定并进入管理</button>
+    </div>
+  `;
+  document.getElementById('merchant-login-content').innerHTML = html;
+  showPage('merchant-login');
+}
+
+function bindMerchant() {
+  const id = document.getElementById('merchant-id-input').value.trim();
+  const shop = shops.find(s => s._id === id);
+  if (!shop) { showToast('❌ 商家ID不存在'); return; }
+  merchantShopId = id;
+  showToast('✅ 绑定成功');
+  setTimeout(() => goMerchantDashboard(), 800);
+}
+
+function goMerchantDashboard() {
+  pageHistory.push('user');
+  renderMerchantTabbar();
+  renderMerchantContent();
+  const shop = shops.find(s => s._id === merchantShopId);
+  document.getElementById('nav-title').textContent = shop.name + ' - 管理';
+  document.getElementById('back-btn').style.display = 'block';
+  showPage('merchant');
+}
+
+function renderMerchantTabbar() {
+  document.getElementById('merchant-tabbar').innerHTML = `
+    <div class="tab-item ${merchantTab==='orders'?'active':''}" onclick="switchMerchantTab('orders')"><div class="tab-icon">📋</div>订单</div>
+    <div class="tab-item ${merchantTab==='products'?'active':''}" onclick="switchMerchantTab('products')"><div class="tab-icon">🍜</div>商品</div>
+    <div class="tab-item ${merchantTab==='settings'?'active':''}" onclick="switchMerchantTab('settings')"><div class="tab-icon">⚙️</div>设置</div>
+  `;
+}
+
+function switchMerchantTab(tab) {
+  merchantTab = tab;
+  renderMerchantTabbar();
+  renderMerchantContent();
+}
+
+function renderMerchantContent() {
+  if (merchantTab === 'orders') renderMerchantOrders();
+  else if (merchantTab === 'products') renderMerchantProducts();
+  else renderMerchantSettings();
+}
+
+// --- 商家订单管理 ---
+let merchantOrderFilter = '';
+
+function renderMerchantOrders() {
+  const myOrders = orders.filter(o => o.shopId === merchantShopId);
+  const tabs = ['','pending','preparing','ready','completed'];
+  const labels = ['全部','待接单','备餐中','待取餐','已完成'];
+  const counts = {};
+  tabs.forEach(t => { counts[t] = t ? myOrders.filter(o => o.status === t).length : myOrders.length; });
+
+  let tabsHtml = tabs.map((t, i) =>
+    `<div class="tab-btn ${merchantOrderFilter===t?'active':''}" onclick="filterMerchantOrders('${t}')">${labels[i]}${counts[t]>0 ? `<span style="background:${t==='pending'?'#fa8c16':t==='ready'?'#52c41a':'#1890ff'};color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px">${counts[t]}</span>` : ''}</div>`
+  ).join('');
+
+  const filtered = merchantOrderFilter ? myOrders.filter(o => o.status === merchantOrderFilter) : myOrders;
+  const statusMap = { pending:'待接单', preparing:'备餐中', ready:'待取餐', completed:'已完成', cancelled:'已取消' };
+
+  let listHtml;
+  if (filtered.length === 0) {
+    listHtml = '<div class="empty-state"><span class="empty-icon">📋</span><span class="empty-text">暂无订单</span></div>';
+  } else {
+    listHtml = filtered.map(o => {
+      let actions = '';
+      if (o.status === 'pending') {
+        actions = `<div style="display:flex;gap:8px;margin-top:10px">
+          <button style="flex:1;background:#52c41a;color:#fff;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer" onclick="event.stopPropagation();updateMerchantOrder('${o._id}','preparing')">接单</button>
+          <button style="flex:1;background:#fff;color:#ff4d4f;border:1px solid #ff4d4f;border-radius:8px;padding:8px;font-size:13px;cursor:pointer" onclick="event.stopPropagation();updateMerchantOrder('${o._id}','cancelled')">拒绝</button>
+        </div>`;
+      } else if (o.status === 'preparing') {
+        actions = `<div style="margin-top:10px"><button style="width:100%;background:#1890ff;color:#fff;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer" onclick="event.stopPropagation();updateMerchantOrder('${o._id}','ready')">标记已备好</button></div>`;
+      } else if (o.status === 'ready') {
+        actions = `<div style="margin-top:10px"><button style="width:100%;background:#52c41a;color:#fff;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer" onclick="event.stopPropagation();updateMerchantOrder('${o._id}','completed')">确认已取餐</button></div>`;
+      }
+      return `
+      <div class="card order-card" onclick="goOrderDetail('${o._id}')">
+        <div class="order-header">
+          <span>📱 ${o.contactLast4}</span>
+          <span class="order-status status-${o.status}">${statusMap[o.status]}</span>
+        </div>
+        <div class="order-items">${o.items.map(i => i.name + ' ×' + i.quantity).join('、')}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="price">¥${o.totalPrice.toFixed(2)}</span>
+          <span style="font-size:12px;color:#999">取餐码 <span style="font-weight:bold;color:#ff4500">${o.pickupCode}</span></span>
+        </div>
+        <div style="font-size:12px;color:#999;margin-top:4px">取餐时间：${fmtDate(o.pickupTime)}</div>
+        ${actions}
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('merchant-content').innerHTML = `<div class="tabs">${tabsHtml}</div>${listHtml}`;
+}
+
+function filterMerchantOrders(status) { merchantOrderFilter = status; renderMerchantOrders(); }
+
+function updateMerchantOrder(orderId, newStatus) {
+  const order = orders.find(o => o._id === orderId);
+  if (!order) return;
+  order.status = newStatus;
+  order.updatedAt = new Date();
+  const statusNames = { preparing:'接单成功', ready:'已标记备好', completed:'已完成', cancelled:'已拒绝' };
+  showToast('✅ ' + statusNames[newStatus]);
+  renderMerchantOrders();
+}
+
+// --- 商家商品管理 ---
+function renderMerchantProducts() {
+  const myProducts = products.filter(p => p.shopId === merchantShopId);
+  const categories = [...new Set(myProducts.map(p => p.category))];
+
+  let html = categories.map(cat => {
+    const catProducts = myProducts.filter(p => p.category === cat);
+    return `
+      <div class="card">
+        <div style="font-size:14px;font-weight:500;margin-bottom:10px">${cat}</div>
+        ${catProducts.map(p => `
+          <div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5">
+            <span style="font-size:24px;margin-right:10px">${p.icon}</span>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:500">${p.name}</div>
+              <div style="font-size:12px;color:#999">库存 ${p.stock} | 已售 ${p.sold}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="price" style="font-size:14px">¥${p.price.toFixed(2)}</div>
+              <div style="margin-top:4px">
+                <label style="font-size:12px;color:#666;cursor:pointer">
+                  <input type="checkbox" ${p.isAvailable ? 'checked' : ''} onchange="toggleProduct('${p._id}',this.checked)">
+                  ${p.isAvailable ? '上架' : '下架'}
+                </label>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('merchant-content').innerHTML = html;
+}
+
+function toggleProduct(productId, available) {
+  const product = products.find(p => p._id === productId);
+  if (product) {
+    product.isAvailable = available;
+    showToast(available ? '✅ 已上架' : '✅ 已下架');
+    renderMerchantProducts();
+  }
+}
+
+// --- 商家店铺设置 ---
+function renderMerchantSettings() {
+  const shop = shops.find(s => s._id === merchantShopId);
+  if (!shop) return;
+
+  document.getElementById('merchant-content').innerHTML = `
+    <div class="card">
+      <div style="font-size:15px;font-weight:500;margin-bottom:12px">店铺信息</div>
+      <div class="info-row"><span class="info-label">店铺名称</span><span>${shop.name}</span></div>
+      <div class="info-row"><span class="info-label">地址</span><span style="font-size:12px">${shop.address}</span></div>
+      <div class="info-row"><span class="info-label">电话</span><span>${shop.phone}</span></div>
+      <div class="info-row"><span class="info-label">营业时间</span><span>${shop.businessHours.start}-${shop.businessHours.end}</span></div>
+      <div class="info-row"><span class="info-label">评分</span><span>⭐ ${shop.rating}</span></div>
+    </div>
+    <div class="card">
+      <div style="font-size:15px;font-weight:500;margin-bottom:12px">营业状态</div>
+      <div style="display:flex;gap:12px">
+        <button style="flex:1;padding:10px;border-radius:10px;font-size:14px;cursor:pointer;border:none;${shop.status==='open'?'background:#52c41a;color:#fff':'background:#f5f5f5;color:#666'}" onclick="toggleShopStatus('open')">🟢 营业中</button>
+        <button style="flex:1;padding:10px;border-radius:10px;font-size:14px;cursor:pointer;border:none;${shop.status==='closed'?'background:#ff4d4f;color:#fff':'background:#f5f5f5;color:#666'}" onclick="toggleShopStatus('closed')">🔴 已休息</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:15px;font-weight:500;margin-bottom:12px">今日数据</div>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1;background:#fff7e6;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:bold;color:#fa8c16">${orders.filter(o => o.shopId===merchantShopId).length}</div>
+          <div style="font-size:12px;color:#999">今日订单</div>
+        </div>
+        <div style="flex:1;background:#f6ffed;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:bold;color:#52c41a">${orders.filter(o => o.shopId===merchantShopId && o.status==='completed').length}</div>
+          <div style="font-size:12px;color:#999">已完成</div>
+        </div>
+        <div style="flex:1;background:#e6f7ff;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:bold;color:#1890ff">¥${orders.filter(o => o.shopId===merchantShopId).reduce((s,o) => s+o.totalPrice, 0).toFixed(0)}</div>
+          <div style="font-size:12px;color:#999">今日营收</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:20px 0">
+      <button class="cancel-btn" style="color:#ff4d4f" onclick="unbindMerchant()">退出商家管理</button>
+    </div>
+  `;
+}
+
+function toggleShopStatus(status) {
+  const shop = shops.find(s => s._id === merchantShopId);
+  if (shop) {
+    shop.status = status;
+    showToast(status === 'open' ? '🟢 已开始营业' : '🔴 已暂停营业');
+    renderMerchantSettings();
+  }
+}
+
+function unbindMerchant() {
+  merchantShopId = null;
+  merchantTab = 'orders';
+  showToast('已退出商家管理');
+  setTimeout(() => goBack(), 800);
 }
 
 // ===== 初始化 =====
