@@ -1,0 +1,25 @@
+{
+  "name": "breakfast-to-go",
+  "version": "1.0.0",
+  "description": "早餐到 - 早餐预订小程序（uni-app版）",
+  "main": "main.js",
+  "scripts": {
+    "dev:h5": "uni -p h5",
+    "build:h5": "uni build -p h5",
+    "dev:mp-weixin": "uni -p mp-weixin",
+    "build:mp-weixin": "uni build -p mp-weixin"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "^3.0.0",
+    "@dcloudio/uni-h5": "^3.0.0",
+    "@dcloudio/uni-mp-weixin": "^3.0.0",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "^3.4.0",
+    "@dcloudio/uni-automator": "^3.0.0",
+    "@dcloudio/uni-cli-shared": "^3.0.0",
+    "@dcloudio/vite-plugin-uni": "^3.0.0",
+    "vite": "^5.0.0"
+  }
+}

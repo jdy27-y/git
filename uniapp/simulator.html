@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>早餐到 - 小程序模拟器</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+    /* 手机外壳 */
+    .phone-frame {
+      width: 375px; height: 812px; background: #000; border-radius: 44px; padding: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      position: relative; overflow: hidden;
+    }
+    .phone-screen {
+      width: 100%; height: 100%; background: #f5f5f5; border-radius: 34px; overflow: hidden; position: relative; display: flex; flex-direction: column;
+    }
+
+    /* 顶部状态栏 */
+    .status-bar {
+      height: 44px; background: #FF8C00; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; color: #fff; font-size: 12px; flex-shrink: 0;
+    }
+
+    /* 导航栏 */
+    .nav-bar {
+      height: 44px; background: #FF8C00; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 17px; font-weight: 600; flex-shrink: 0;
+    }
+    .nav-bar .back-btn {
+      position: absolute; left: 16px; cursor: pointer; font-size: 20px;
+    }
+
+    /* 页面容器 */
+    .page-container {
+      flex: 1; overflow-y: auto; padding: 12px 16px; padding-bottom: 70px;
+    }
+
+    /* TabBar */
+    .tabbar {
+      height: 56px; background: #fff; display: flex; border-top: 1px solid #eee; flex-shrink: 0; position: absolute; bottom: 0; left: 0; right: 0;
+    }
+    .tab-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; color: #999;
+    }
+    .tab-item.active { color: #FF8C00; }
+    .tab-item .tab-icon { font-size: 22px; margin-bottom: 2px; }
+
+    /* 页面 */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* 通用组件 */
+    .search-bar {
+      background: #fff; border-radius: 20px; padding: 10px 16px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .search-bar input { width: 100%; border: none; outline: none; font-size: 14px; }
+
+    .card {
+      background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    }
+
+    .price { color: #ff4500; font-weight: bold; }
+
+    .tag {
+      display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; margin-left: 8px;
+    }
+    .tag-open { background: #e6f7e6; color: #52c41a; }
+    .tag-closed { background: #fff1f0; color: #ff4d4f; }
+
+    /* 商家卡片 */
+    .shop-card {
+      display: flex; background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 12px; cursor: pointer; box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      transition: transform 0.15s;
+    }
+    .shop-card:active { transform: scale(0.98); }
+    .shop-avatar {
+      width: 70px; height: 70px; border-radius: 10px; background: linear-gradient(135deg, #FFD700, #FF8C00); display: flex; align-items: center; justify-content: center; font-size: 32px; flex-shrink: 0; margin-right: 12px;
+    }
+    .shop-info { flex: 1; }
+    .shop-name-row { display: flex; align-items: center; font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+    .shop-meta { display: flex; font-size: 12px; color: #666; margin-bottom: 4px; gap: 16px; }
+    .shop-notice { font-size: 11px; color: #ff8c00; }
+
+    /* 分类导航 */
+    .category-nav { display: flex; gap: 10px; padding: 10px 0; overflow-x: auto; white-space: nowrap; }
+    .category-item {
+      padding: 8px 16px; background: #f0f0f0; border-radius: 20px; font-size: 13px; color: #666; cursor: pointer; flex-shrink: 0;
+    }
+    .category-item.active { background: #FF8C00; color: #fff; }
+
+    /* 商品列表 */
+    .product-item {
+      display: flex; background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .product-img {
+      width: 80px; height: 80px; border-radius: 10px; background: linear-gradient(135deg, #FFE4B5, #FFA500); display: flex; align-items: center; justify-content: center; font-size: 36px; flex-shrink: 0; margin-right: 12px;
+    }
+    .product-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .product-name { font-size: 15px; font-weight: 500; }
+    .product-category { font-size: 12px; color: #999; }
+    .product-bottom { display: flex; justify-content: space-between; align-items: center; }
+    .product-price { font-size: 17px; }
+
+    .qty-control { display: flex; align-items: center; gap: 8px; }
+    .qty-btn {
+      width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; cursor: pointer;
+    }
+    .qty-minus { background: #f0f0f0; color: #666; }
+    .qty-plus { background: #FF8C00; color: #fff; }
+    .qty-num { min-width: 24px; text-align: center; font-size: 14px; }
+
+    /* 底部结算栏 */
+    .settle-bar {
+      position: absolute; bottom: 56px; left: 0; right: 0; height: 56px; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; box-shadow: 0 -1px 6px rgba(0,0,0,0.08); z-index: 10;
+    }
+    .settle-left { display: flex; align-items: center; gap: 12px; }
+    .cart-icon { font-size: 28px; position: relative; }
+    .cart-badge {
+      position: absolute; top: -6px; right: -8px; background: #ff4500; color: #fff; font-size: 10px; min-width: 18px; height: 18px; border-radius: 9px; text-align: center; line-height: 18px;
+    }
+    .settle-btn {
+      background: #FF8C00; color: #fff; padding: 10px 28px; border-radius: 24px; font-size: 15px; font-weight: 500; cursor: pointer;
+    }
+
+    /* 确认订单页 */
+    .time-list { display: flex; flex-wrap: wrap; gap: 10px; }
+    .time-item {
+      padding: 10px 16px; background: #f5f5f5; border-radius: 10px; font-size: 13px; cursor: pointer;
+    }
+    .time-item.active { background: #FF8C00; color: #fff; }
+
+    .input-row { display: flex; align-items: center; gap: 12px; }
+    .input-row label { font-size: 14px; white-space: nowrap; }
+    .input-row input {
+      flex: 1; height: 40px; border: 1px solid #eee; border-radius: 8px; padding: 0 12px; font-size: 14px; outline: none;
+    }
+
+    .submit-btn {
+      background: #FF8C00; color: #fff; border: none; border-radius: 24px; height: 48px; width: 100%; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 24px;
+    }
+
+    /* 订单列表 */
+    .tabs { display: flex; background: #fff; border-radius: 10px; padding: 10px; margin-bottom: 16px; }
+    .tab-btn {
+      flex: 1; text-align: center; padding: 8px 0; font-size: 13px; color: #666; border-radius: 8px; cursor: pointer;
+    }
+    .tab-btn.active { background: #FF8C00; color: #fff; }
+
+    .order-card { cursor: pointer; }
+    .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .order-status {
+      font-size: 12px; padding: 2px 8px; border-radius: 6px;
+    }
+    .status-pending { background: #fff7e6; color: #fa8c16; }
+    .status-preparing { background: #e6f7ff; color: #1890ff; }
+    .status-ready { background: #f6ffed; color: #52c41a; }
+    .status-completed { background: #f5f5f5; color: #999; }
+    .status-cancelled { background: #fff1f0; color: #ff4d4f; }
+    .order-items { font-size: 13px; color: #666; margin-bottom: 10px; }
+    .order-footer { display: flex; justify-content: space-between; font-size: 14px; }
+    .order-time { font-size: 12px; color: #999; }
+    .order-pickup {
+      margin-top: 10px; padding: 10px; background: #f6ffed; border-radius: 8px; text-align: center; font-size: 16px; font-weight: bold; color: #52c41a;
+    }
+
+    /* 订单详情 */
+    .status-section { text-align: center; padding: 24px; }
+    .status-icon { font-size: 48px; margin-bottom: 8px; }
+    .status-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+    .pickup-code-big { font-size: 32px; font-weight: bold; color: #ff4500; margin-top: 12px; }
+
+    .section-title { font-size: 15px; font-weight: 500; margin-bottom: 10px; }
+    .info-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+    .info-label { color: #999; }
+
+    .cancel-btn {
+      background: #fff; color: #ff4d4f; border: 1px solid #ff4d4f; border-radius: 24px; height: 48px; width: 100%; font-size: 16px; cursor: pointer; margin-top: 24px;
+    }
+
+    /* 个人中心 */
+    .user-header {
+      display: flex; align-items: center; padding: 24px 16px;
+    }
+    .user-avatar {
+      width: 60px; height: 60px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 32px; margin-right: 14px;
+    }
+    .user-name { font-size: 18px; font-weight: bold; }
+    .user-sub { font-size: 13px; color: #999; }
+
+    .menu-item {
+      display: flex; align-items: center; padding: 16px; border-bottom: 1px solid #f5f5f5; cursor: pointer;
+    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-icon { font-size: 20px; margin-right: 12px; }
+    .menu-text { flex: 1; font-size: 15px; }
+    .menu-arrow { color: #ccc; font-size: 18px; }
+
+    .empty-state { text-align: center; padding: 60px 0; }
+    .empty-icon { font-size: 48px; display: block; margin-bottom: 10px; }
+    .empty-text { color: #999; font-size: 14px; }
+
+    .section-title { font-size: 15px; font-weight: 500; margin-bottom: 10px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.75); color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 999; display: none;
+    }
+    .toast.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="status-bar">
+        <span id="time-display">9:41</span>
+        <span>📶 🔋</span>
+      </div>
+      <div class="nav-bar" id="nav-bar">
+        <span class="back-btn" id="back-btn" style="display:none" onclick="goBack()">‹</span>
+        <span id="nav-title">早餐到</span>
+      </div>
+
+      <!-- ===== 首页 ===== -->
+      <div class="page active" id="page-index">
+        <div class="page-container">
+          <div class="search-bar"><input placeholder="🔍 搜索商家" oninput="filterShops(this.value)"></div>
+          <div id="shop-list"></div>
+        </div>
+        <div class="tabbar">
+          <div class="tab-item active" onclick="showTab('index')"><div class="tab-icon">🏠</div>首页</div>
+          <div class="tab-item" onclick="showTab('list')"><div class="tab-icon">📋</div>订单</div>
+          <div class="tab-item" onclick="showTab('user')"><div class="tab-icon">👤</div>我的</div>
+        </div>
+      </div>
+
+      <!-- ===== 商家详情页 ===== -->
+      <div class="page" id="page-shop">
+        <div class="page-container" id="shop-detail"></div>
+        <div class="settle-bar" id="settle-bar" style="display:none">
+          <div class="settle-left">
+            <div class="cart-icon">🛒<div class="cart-badge" id="cart-badge">0</div></div>
+            <div>合计：<span class="price" id="settle-total">¥0.00</span></div>
+          </div>
+          <div class="settle-btn" onclick="goCheckout()">去结算</div>
+        </div>
+      </div>
+
+      <!-- ===== 确认订单页 ===== -->
+      <div class="page" id="page-confirm">
+        <div class="page-container" id="confirm-detail"></div>
+      </div>
+
+      <!-- ===== 订单列表页 ===== -->
+      <div class="page" id="page-list">
+        <div class="page-container">
+          <div class="tabs" id="order-tabs"></div>
+          <div id="order-list"></div>
+        </div>
+        <div class="tabbar">
+          <div class="tab-item" onclick="showTab('index')"><div class="tab-icon">🏠</div>首页</div>
+          <div class="tab-item active" onclick="showTab('list')"><div class="tab-icon">📋</div>订单</div>
+          <div class="tab-item" onclick="showTab('user')"><div class="tab-icon">👤</div>我的</div>
+        </div>
+      </div>
+
+      <!-- ===== 订单详情页 ===== -->
+      <div class="page" id="page-detail">
+        <div class="page-container" id="order-detail"></div>
+      </div>
+
+      <!-- ===== 个人中心页 ===== -->
+      <div class="page" id="page-user">
+        <div class="page-container">
+          <div class="card user-header">
+            <div class="user-avatar">👤</div>
+            <div>
+              <div class="user-name">测试用户</div>
+              <div class="user-sub">微信授权登录</div>
+            </div>
+          </div>
+          <div class="card" style="padding:0">
+            <div class="menu-item" onclick="showTab('list')"><span class="menu-icon">📋</span><span class="menu-text">我的订单</span><span class="menu-arrow">›</span></div>
+            <div class="menu-item"><span class="menu-icon">🔔</span><span class="menu-text">消息通知</span><span class="menu-arrow">›</span></div>
+            <div class="menu-item"><span class="menu-icon">📞</span><span class="menu-text">联系客服</span><span class="menu-arrow">›</span></div>
+            <div class="menu-item"><span class="menu-icon">📍</span><span class="menu-text">常用地址</span><span class="menu-arrow">›</span></div>
+          </div>
+          <div class="card" style="padding:0">
+            <div class="menu-item"><span class="menu-icon">ℹ️</span><span class="menu-text">关于我们</span><span class="menu-arrow">›</span></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab-item" onclick="showTab('index')"><div class="tab-icon">🏠</div>首页</div>
+          <div class="tab-item" onclick="showTab('list')"><div class="tab-icon">📋</div>订单</div>
+          <div class="tab-item active" onclick="showTab('user')"><div class="tab-icon">👤</div>我的</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+// ===== 模拟数据 =====
+const shops = [
+  { _id:'s1', name:'张记包子铺', address:'北京市朝阳区建国路88号', phone:'010-12345678', businessHours:{start:'06:30',end:'10:00'}, status:'open', rating:4.8, notice:'新店开业，全场8折！', icon:'🥟', distance:'350m' },
+  { _id:'s2', name:'李氏粥铺', address:'北京市海淀区中关村大街100号', phone:'010-87654321', businessHours:{start:'07:00',end:'09:30'}, status:'open', rating:4.5, notice:'', icon:'🥣', distance:'1.2km' },
+  { _id:'s3', name:'王姐豆浆', address:'北京市西城区西单北大街50号', phone:'010-11223344', businessHours:{start:'06:00',end:'08:30'}, status:'closed', rating:4.2, notice:'装修中，暂停营业', icon:'🥛', distance:'2.8km' },
+  { _id:'s4', name:'晨曦早点', address:'北京市东城区王府井大街200号', phone:'010-55667788', businessHours:{start:'05:30',end:'10:30'}, status:'open', rating:4.9, notice:'周一至周五套餐立减5元', icon:'🌅', distance:'800m' }
+];
+
+const products = [
+  { _id:'p1', shopId:'s1', name:'鲜肉包', price:3.00, category:'包子', stock:100, sold:25, isAvailable:true, icon:'🥟' },
+  { _id:'p2', shopId:'s1', name:'菜包', price:2.50, category:'包子', stock:100, sold:18, isAvailable:true, icon:'🥬' },
+  { _id:'p3', shopId:'s1', name:'豆沙包', price:2.50, category:'包子', stock:80, sold:12, isAvailable:true, icon:'🫘' },
+  { _id:'p4', shopId:'s1', name:'皮蛋瘦肉粥', price:8.00, category:'粥', stock:50, sold:30, isAvailable:true, icon:'🥣' },
+  { _id:'p5', shopId:'s1', name:'小米粥', price:5.00, category:'粥', stock:60, sold:20, isAvailable:true, icon:'🍚' },
+  { _id:'p6', shopId:'s1', name:'豆浆', price:3.00, category:'饮品', stock:200, sold:45, isAvailable:true, icon:'🥛' },
+  { _id:'p7', shopId:'s1', name:'油条', price:2.00, category:'面点', stock:150, sold:50, isAvailable:true, icon:'🥖' },
+
+  { _id:'p11', shopId:'s2', name:'皮蛋瘦肉粥', price:7.00, category:'粥', stock:80, sold:35, isAvailable:true, icon:'🥣' },
+  { _id:'p12', shopId:'s2', name:'红豆粥', price:6.00, category:'粥', stock:60, sold:22, isAvailable:true, icon:'🫘' },
+  { _id:'p13', shopId:'s2', name:'八宝粥', price:7.00, category:'粥', stock:50, sold:18, isAvailable:true, icon:'🍚' },
+  { _id:'p14', shopId:'s2', name:'油条', price:1.50, category:'面点', stock:100, sold:40, isAvailable:true, icon:'🥖' },
+
+  { _id:'p31', shopId:'s4', name:'牛肉包', price:4.00, category:'包子', stock:80, sold:30, isAvailable:true, icon:'🥟' },
+  { _id:'p32', shopId:'s4', name:'三鲜包', price:3.50, category:'包子', stock:70, sold:25, isAvailable:true, icon:'🥟' },
+  { _id:'p33', shopId:'s4', name:'紫米粥', price:6.00, category:'粥', stock:50, sold:15, isAvailable:true, icon:'🍚' },
+  { _id:'p34', shopId:'s4', name:'牛奶', price:5.00, category:'饮品', stock:100, sold:40, isAvailable:true, icon:'🥛' },
+  { _id:'p35', shopId:'s4', name:'鸡蛋灌饼', price:6.00, category:'面点', stock:60, sold:35, isAvailable:true, icon:'🫓' }
+];
+
+const orders = [];
+let cart = {};
+let currentPage = 'index';
+let pageHistory = [];
+let currentShopId = null;
+let orderFilter = '';
+
+// ===== 页面切换 =====
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('back-btn').style.display = ['shop','confirm','detail'].includes(name) ? 'block' : 'none';
+  const titles = { index:'早餐到', shop:'商家详情', confirm:'确认订单', list:'我的订单', detail:'订单详情', user:'我的' };
+  document.getElementById('nav-title').textContent = titles[name] || '';
+  currentPage = name;
+}
+
+function showTab(name) {
+  pageHistory = [];
+  showPage(name);
+  if (name === 'list') renderOrders();
+}
+
+function goBack() {
+  if (pageHistory.length > 0) {
+    const prev = pageHistory.pop();
+    showPage(prev);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+// ===== 首页 =====
+function renderShops(filter) {
+  const list = document.getElementById('shop-list');
+  const filtered = filter ? shops.filter(s => s.name.includes(filter) || s.address.includes(filter)) : shops;
+  list.innerHTML = filtered.map(s => `
+    <div class="shop-card" onclick="goShop('${s._id}')">
+      <div class="shop-avatar">${s.icon}</div>
+      <div class="shop-info">
+        <div class="shop-name-row">${s.name}<span class="tag ${s.status==='open'?'tag-open':'tag-closed'}">${s.status==='open'?'营业中':'已休息'}</span></div>
+        <div class="shop-meta"><span>📍 ${s.distance}</span><span>⭐ ${s.rating}</span></div>
+        ${s.notice ? `<div class="shop-notice">📢 ${s.notice}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterShops(val) { renderShops(val); }
+
+// ===== 商家详情 =====
+function goShop(id) {
+  pageHistory.push('index');
+  currentShopId = id;
+  cart = {};
+  const shop = shops.find(s => s._id === id);
+  const prods = products.filter(p => p.shopId === id && p.isAvailable);
+  const cats = [...new Set(prods.map(p => p.category))];
+
+  let html = `
+    <div class="card">
+      <div style="font-size:18px;font-weight:bold;margin-bottom:6px">${shop.icon} ${shop.name}</div>
+      <div style="display:flex;align-items:center;margin-bottom:6px"><span class="tag ${shop.status==='open'?'tag-open':'tag-closed'}">${shop.status==='open'?'营业中':'已休息'}</span><span style="margin-left:12px;color:#666;font-size:12px">⭐ ${shop.rating}</span></div>
+      <div style="font-size:13px;color:#666;margin-bottom:4px">📍 ${shop.address}</div>
+      <div style="font-size:13px;color:#666;margin-bottom:4px">🕐 ${shop.businessHours.start}-${shop.businessHours.end}</div>
+      ${shop.notice ? `<div style="font-size:12px;color:#ff8c00">📢 ${shop.notice}</div>` : ''}
+    </div>
+    <div class="category-nav">
+      <div class="category-item active" onclick="filterProducts('')">全部</div>
+      ${cats.map(c => `<div class="category-item" onclick="filterProducts('${c}')">${c}</div>`).join('')}
+    </div>
+    <div id="product-list"></div>
+  `;
+  document.getElementById('shop-detail').innerHTML = html;
+  renderProducts('');
+  updateCart();
+  showPage('shop');
+}
+
+function filterProducts(cat) {
+  document.querySelectorAll('.category-item').forEach(el => el.classList.remove('active'));
+  event.target.classList.add('active');
+  renderProducts(cat);
+}
+
+function renderProducts(cat) {
+  const prods = products.filter(p => p.shopId === currentShopId && p.isAvailable);
+  const filtered = cat ? prods.filter(p => p.category === cat) : prods;
+  document.getElementById('product-list').innerHTML = filtered.map(p => `
+    <div class="product-item">
+      <div class="product-img">${p.icon}</div>
+      <div class="product-info">
+        <div class="product-name">${p.name}</div>
+        <div class="product-category">${p.category}</div>
+        <div class="product-bottom">
+          <span class="product-price price">¥${p.price.toFixed(2)}</span>
+          <div class="qty-control">
+            ${cart[p._id] ? `<div class="qty-btn qty-minus" onclick="changeQty('${p._id}',-1)">-</div><span class="qty-num">${cart[p._id]}</span>` : ''}
+            <div class="qty-btn qty-plus" onclick="changeQty('${p._id}',1)">+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function changeQty(id, delta) {
+  cart[id] = (cart[id] || 0) + delta;
+  if (cart[id] <= 0) delete cart[id];
+  renderProducts(document.querySelector('.category-item.active')?.textContent === '全部' ? '' : document.querySelector('.category-item.active')?.textContent || '');
+  updateCart();
+}
+
+function updateCart() {
+  let count = 0, total = 0;
+  for (const id in cart) {
+    const p = products.find(x => x._id === id);
+    count += cart[id];
+    total += p.price * cart[id];
+  }
+  const bar = document.getElementById('settle-bar');
+  if (count > 0) {
+    bar.style.display = 'flex';
+    document.getElementById('cart-badge').textContent = count;
+    document.getElementById('settle-total').textContent = '¥' + total.toFixed(2);
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+// ===== 确认订单 =====
+function goCheckout() {
+  pageHistory.push('shop');
+  const shop = shops.find(s => s._id === currentShopId);
+  const items = [];
+  let total = 0;
+  for (const id in cart) {
+    const p = products.find(x => x._id === id);
+    items.push(p);
+    total += p.price * cart[id];
+  }
+
+  const slots = [];
+  for (let h = 7; h < 9; h++) {
+    slots.push(`${String(h).padStart(2,'0')}:00`);
+    slots.push(`${String(h).padStart(2,'0')}:30`);
+  }
+
+  window._checkoutData = { items, total, selectedTime: '', contact: '' };
+
+  let html = `
+    <div class="card"><div style="font-size:15px;font-weight:500">🏪 ${shop.name}</div></div>
+    <div class="card">
+      ${items.map(p => `<div style="display:flex;justify-content:space-between;padding:8px 0"><span>${p.name} ×${cart[p._id]}</span><span class="price">¥${(p.price * cart[p._id]).toFixed(2)}</span></div>`).join('')}
+      <div style="border-top:1px solid #eee;margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-weight:bold"><span>合计</span><span class="price">¥${total.toFixed(2)}</span></div>
+    </div>
+    <div class="card">
+      <div style="font-size:15px;font-weight:500;margin-bottom:12px">取餐时间</div>
+      <div class="time-list">${slots.map(s => `<div class="time-item" onclick="selectTime('${s}',this)">${s}</div>`).join('')}</div>
+    </div>
+    <div class="card">
+      <div style="font-size:15px;font-weight:500;margin-bottom:12px">联系方式</div>
+      <div class="input-row">
+        <label>手机号后四位</label>
+        <input type="tel" maxlength="4" placeholder="请输入" oninput="window._checkoutData.contact=this.value">
+      </div>
+    </div>
+    <button class="submit-btn" onclick="submitOrder()">提交订单</button>
+  `;
+  document.getElementById('confirm-detail').innerHTML = html;
+  showPage('confirm');
+}
+
+function selectTime(time, el) {
+  document.querySelectorAll('.time-item').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  window._checkoutData.selectedTime = time;
+}
+
+function submitOrder() {
+  const d = window._checkoutData;
+  if (!d.selectedTime) { showToast('请选择取餐时间'); return; }
+  if (!d.contact || d.contact.length !== 4) { showToast('请输入手机号后四位'); return; }
+
+  const pickupCode = String(1000 + Math.floor(Math.random() * 9000));
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const [h, m] = d.selectedTime.split(':');
+  tomorrow.setHours(+h, +m, 0, 0);
+
+  const order = {
+    _id: 'o' + Date.now(),
+    shopId: currentShopId,
+    items: d.items.map(p => ({ productId: p._id, name: p.name, price: p.price, quantity: cart[p._id] })),
+    totalPrice: d.total,
+    pickupTime: tomorrow,
+    pickupCode,
+    contactLast4: d.contact,
+    status: 'pending',
+    createdAt: new Date()
+  };
+  orders.unshift(order);
+
+  // 更新销量
+  for (const id in cart) {
+    const p = products.find(x => x._id === id);
+    if (p) p.sold += cart[id];
+  }
+
+  showToast('✅ 下单成功');
+  setTimeout(() => goOrderDetail(order._id), 1000);
+}
+
+// ===== 订单列表 =====
+function renderOrders() {
+  const tabs = ['','pending','preparing','ready','completed'];
+  const labels = ['全部','待接单','备餐中','待取餐','已完成'];
+  document.getElementById('order-tabs').innerHTML = tabs.map((t, i) =>
+    `<div class="tab-btn ${orderFilter === t ? 'active' : ''}" onclick="filterOrders('${t}')">${labels[i]}</div>`
+  ).join('');
+
+  const filtered = orderFilter ? orders.filter(o => o.status === orderFilter) : orders;
+  const statusMap = { pending:'待接单', preparing:'备餐中', ready:'待取餐', completed:'已完成', cancelled:'已取消' };
+
+  if (filtered.length === 0) {
+    document.getElementById('order-list').innerHTML = '<div class="empty-state"><span class="empty-icon">📋</span><span class="empty-text">暂无订单</span></div>';
+    return;
+  }
+
+  document.getElementById('order-list').innerHTML = filtered.map(o => {
+    const shop = shops.find(s => s._id === o.shopId);
+    return `
+    <div class="card order-card" onclick="goOrderDetail('${o._id}')">
+      <div class="order-header">
+        <span>🏪 ${shop ? shop.name : '未知'}</span>
+        <span class="order-status status-${o.status}">${statusMap[o.status]}</span>
+      </div>
+      <div class="order-items">${o.items.map(i => i.name + ' ×' + i.quantity).join('、')}</div>
+      <div class="order-footer"><span>合计：<span class="price">¥${o.totalPrice.toFixed(2)}</span></span><span class="order-time">${fmtDate(o.createdAt)}</span></div>
+      ${o.status === 'ready' ? `<div class="order-pickup">取餐码：${o.pickupCode}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function filterOrders(status) { orderFilter = status; renderOrders(); }
+
+// ===== 订单详情 =====
+function goOrderDetail(id) {
+  pageHistory.push(pageHistory.length > 0 ? pageHistory[pageHistory.length - 1] : 'index');
+  const order = orders.find(o => o._id === id);
+  if (!order) return;
+  const shop = shops.find(s => s._id === order.shopId);
+  const statusMap = { pending:'⏳ 等待商家接单', preparing:'👨‍🍳 商家正在备餐', ready:'✅ 请尽快取餐', completed:'🎉 订单已完成', cancelled:'❌ 订单已取消' };
+  const canCancel = ['pending', 'preparing'].includes(order.status);
+
+  let html = `
+    <div class="card status-section">
+      <div class="status-icon">${statusMap[order.status]?.split(' ')[0] || '📋'}</div>
+      <div class="status-title">${statusMap[order.status]?.split(' ')[1] || ''}</div>
+      ${order.status === 'ready' ? `<div class="pickup-code-big">取餐码：${order.pickupCode}</div>` : ''}
+    </div>
+    <div class="card">
+      <div class="section-title">商家信息</div>
+      <div style="font-size:14px;margin-bottom:6px">🏪 ${shop.name}</div>
+      <div style="font-size:13px;color:#666;margin-bottom:4px">📍 ${shop.address}</div>
+      <div style="font-size:13px;color:#1890ff;cursor:pointer">📞 ${shop.phone}</div>
+    </div>
+    <div class="card">
+      <div class="section-title">商品明细</div>
+      ${order.items.map(i => `<div style="display:flex;justify-content:space-between;padding:6px 0"><span>${i.name}</span><span><span class="price" style="margin-right:12px">¥${i.price}</span>×${i.quantity}</span></div>`).join('')}
+      <div style="border-top:1px solid #eee;margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-weight:bold"><span>合计</span><span class="price">¥${order.totalPrice.toFixed(2)}</span></div>
+    </div>
+    <div class="card">
+      <div class="info-row"><span class="info-label">取餐时间</span><span>${fmtDate(order.pickupTime)}</span></div>
+      <div class="info-row"><span class="info-label">联系方式</span><span>手机后四位 ${order.contactLast4}</span></div>
+      <div class="info-row"><span class="info-label">下单时间</span><span>${fmtDate(order.createdAt)}</span></div>
+    </div>
+    ${canCancel ? `<button class="cancel-btn" onclick="cancelOrder('${order._id}')">取消订单</button>` : ''}
+  `;
+  document.getElementById('order-detail').innerHTML = html;
+  showPage('detail');
+}
+
+function cancelOrder(id) {
+  if (!confirm('确定要取消这个订单吗？')) return;
+  const order = orders.find(o => o._id === id);
+  if (!order) return;
+  const pickupTime = new Date(order.pickupTime);
+  const oneHourBefore = new Date(pickupTime.getTime() - 3600000);
+  if (new Date() >= oneHourBefore) { showToast('已超过取消时限'); return; }
+  order.status = 'cancelled';
+  for (const item of order.items) {
+    const p = products.find(x => x._id === item.productId);
+    if (p) p.sold -= item.quantity;
+  }
+  showToast('✅ 取消成功');
+  goOrderDetail(id);
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const date = new Date(d);
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+}
+
+// ===== 初始化 =====
+renderShops();
+
+// 更新时间
+setInterval(() => {
+  const now = new Date();
+  document.getElementById('time-display').textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+}, 1000);
+  </script>
+</body>
+</html>
