@@ -206,6 +206,34 @@
       position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.75); color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 999; display: none;
     }
     .toast.show { display: block; }
+
+    /* 添加商品表单 */
+    .add-product-form .form-group { margin-bottom: 16px; }
+    .add-product-form .form-label { font-size: 14px; font-weight: 500; margin-bottom: 8px; display: block; }
+    .add-product-form .form-input {
+      width: 100%; height: 40px; border: 1px solid #eee; border-radius: 8px; padding: 0 12px; font-size: 14px; outline: none;
+    }
+    .add-product-form .form-input:focus { border-color: #FF8C00; }
+    .add-product-form .form-select {
+      width: 100%; height: 40px; border: 1px solid #eee; border-radius: 8px; padding: 0 12px; font-size: 14px; outline: none; background: #fff;
+    }
+    .upload-area {
+      width: 120px; height: 120px; border: 2px dashed #ddd; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; margin: 0 auto; transition: border-color 0.2s;
+    }
+    .upload-area:hover { border-color: #FF8C00; }
+    .upload-area .upload-icon { font-size: 36px; margin-bottom: 4px; }
+    .upload-area .upload-text { font-size: 12px; color: #999; }
+    .upload-area img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+    .add-product-btn {
+      width: 100%; padding: 14px; background: #FF8C00; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 8px;
+    }
+    .add-product-btn:active { opacity: 0.85; }
+    .cancel-add-btn {
+      width: 100%; padding: 14px; background: #f5f5f5; color: #666; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; margin-top: 10px;
+    }
+    .delete-product-btn {
+      background: none; border: none; color: #ff4d4f; font-size: 12px; cursor: pointer; padding: 4px 8px;
+    }
   </style>
 </head>
 <body>
@@ -785,29 +813,96 @@ function updateMerchantOrder(orderId, newStatus) {
 }
 
 // --- 商家商品管理 ---
+let showAddForm = false;
+let addFormPreview = '';
+
 function renderMerchantProducts() {
   const myProducts = products.filter(p => p.shopId === merchantShopId);
   const categories = [...new Set(myProducts.map(p => p.category))];
 
-  let html = categories.map(cat => {
+  let html = '';
+
+  // 添加新菜品按钮
+  html += `<div class="card" style="padding:12px;text-align:center;cursor:pointer;border:2px dashed #FF8C00;background:#fff8f0" onclick="toggleAddForm()">
+    <span style="font-size:24px">➕</span>
+    <span style="font-size:14px;color:#FF8C00;margin-left:8px;font-weight:500">添加新菜品</span>
+  </div>`;
+
+  // 添加商品表单
+  if (showAddForm) {
+    html += `
+    <div class="card add-product-form">
+      <div style="font-size:15px;font-weight:500;margin-bottom:16px">📝 添加新菜品</div>
+      
+      <div class="form-group" style="text-align:center">
+        <label class="form-label">菜品图片</label>
+        <div class="upload-area" onclick="document.getElementById('product-image-input').click()">
+          ${addFormPreview ? `<img src="${addFormPreview}" id="upload-preview">` : '<div class="upload-icon">📷</div><div class="upload-text">点击上传图片</div>'}
+        </div>
+        <input type="file" id="product-image-input" accept="image/*" style="display:none" onchange="previewImage(this)">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">菜品名称</label>
+        <input class="form-input" type="text" id="add-name" placeholder="如：香菇青菜包">
+      </div>
+
+      <div class="form-group" style="display:flex;gap:12px">
+        <div style="flex:1">
+          <label class="form-label">价格（元）</label>
+          <input class="form-input" type="number" id="add-price" placeholder="0.00" step="0.5" min="0">
+        </div>
+        <div style="flex:1">
+          <label class="form-label">库存</label>
+          <input class="form-input" type="number" id="add-stock" placeholder="999" min="0">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">分类</label>
+        <select class="form-select" id="add-category">
+          <option value="">请选择分类</option>
+          ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+          <option value="__new__">+ 新建分类</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="new-category-group" style="display:none">
+        <label class="form-label">新分类名称</label>
+        <input class="form-input" type="text" id="add-new-category" placeholder="如：煎饼">
+      </div>
+
+      <button class="add-product-btn" onclick="submitNewProduct()">✅ 确认添加</button>
+      <button class="cancel-add-btn" onclick="toggleAddForm()">取消</button>
+    </div>`;
+  }
+
+  // 商品列表
+  html += categories.map(cat => {
     const catProducts = myProducts.filter(p => p.category === cat);
     return `
       <div class="card">
-        <div style="font-size:14px;font-weight:500;margin-bottom:10px">${cat}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-size:14px;font-weight:500">${cat}</span>
+          <span style="font-size:12px;color:#999">${catProducts.length} 个商品</span>
+        </div>
         ${catProducts.map(p => `
           <div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5">
-            <span style="font-size:24px;margin-right:10px">${p.icon}</span>
+            <div style="width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#FFE4B5,#FFA500);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;margin-right:10px;overflow:hidden">
+              ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%;height:100%;object-fit:cover">` : p.icon}
+            </div>
             <div style="flex:1">
               <div style="font-size:14px;font-weight:500">${p.name}</div>
               <div style="font-size:12px;color:#999">库存 ${p.stock} | 已售 ${p.sold}</div>
             </div>
-            <div style="text-align:right">
+            <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
               <div class="price" style="font-size:14px">¥${p.price.toFixed(2)}</div>
-              <div style="margin-top:4px">
-                <label style="font-size:12px;color:#666;cursor:pointer">
+              <div style="display:flex;align-items:center;gap:6px">
+                <label style="font-size:12px;color:#666;cursor:pointer;display:flex;align-items:center;gap:4px">
                   <input type="checkbox" ${p.isAvailable ? 'checked' : ''} onchange="toggleProduct('${p._id}',this.checked)">
                   ${p.isAvailable ? '上架' : '下架'}
                 </label>
+                <button class="delete-product-btn" onclick="deleteProduct('${p._id}')">删除</button>
               </div>
             </div>
           </div>
@@ -817,6 +912,86 @@ function renderMerchantProducts() {
   }).join('');
 
   document.getElementById('merchant-content').innerHTML = html;
+
+  // 绑定分类选择事件
+  setTimeout(() => {
+    const sel = document.getElementById('add-category');
+    if (sel) {
+      sel.addEventListener('change', function() {
+        const newCatGroup = document.getElementById('new-category-group');
+        newCatGroup.style.display = this.value === '__new__' ? 'block' : 'none';
+      });
+    }
+  }, 0);
+}
+
+function toggleAddForm() {
+  showAddForm = !showAddForm;
+  addFormPreview = '';
+  renderMerchantProducts();
+}
+
+function previewImage(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      addFormPreview = e.target.result;
+      renderMerchantProducts();
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function submitNewProduct() {
+  const name = document.getElementById('add-name').value.trim();
+  const price = parseFloat(document.getElementById('add-price').value);
+  const stock = parseInt(document.getElementById('add-stock').value) || 999;
+  const categorySelect = document.getElementById('add-category').value;
+  const newCategory = document.getElementById('add-new-category')?.value.trim();
+
+  if (!name) { showToast('❌ 请输入菜品名称'); return; }
+  if (!price || price <= 0) { showToast('❌ 请输入有效价格'); return; }
+  if (!categorySelect) { showToast('❌ 请选择分类'); return; }
+
+  const category = categorySelect === '__new__' ? newCategory : categorySelect;
+  if (!category) { showToast('❌ 请输入新分类名称'); return; }
+
+  // 根据分类自动选择图标
+  const iconMap = {
+    '包子': '🥟', '粥': '🥣', '饮品': '🥛', '面点': '🥖', '煎饼': '🫓',
+    '小吃': '🍢', '甜品': '🍰', '米饭': '🍚', '面条': '🍜'
+  };
+  const icon = iconMap[category] || '🍽️';
+
+  const newProduct = {
+    _id: 'p_' + Date.now(),
+    shopId: merchantShopId,
+    name,
+    price,
+    imageUrl: addFormPreview || '',
+    category,
+    stock,
+    sold: 0,
+    isAvailable: true,
+    icon
+  };
+
+  products.push(newProduct);
+  showAddForm = false;
+  addFormPreview = '';
+  showToast('✅ 添加成功：' + name);
+  renderMerchantProducts();
+}
+
+function deleteProduct(productId) {
+  if (!confirm('确定要删除这个菜品吗？')) return;
+  const idx = products.findIndex(p => p._id === productId);
+  if (idx !== -1) {
+    const name = products[idx].name;
+    products.splice(idx, 1);
+    showToast('✅ 已删除：' + name);
+    renderMerchantProducts();
+  }
 }
 
 function toggleProduct(productId, available) {
