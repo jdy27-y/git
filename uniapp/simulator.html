@@ -384,8 +384,8 @@ let merchantTab = 'orders'; // 商家当前tab
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
-  document.getElementById('back-btn').style.display = ['shop','confirm','detail'].includes(name) ? 'block' : 'none';
-  const titles = { index:'早餐到', shop:'商家详情', confirm:'确认订单', list:'我的订单', detail:'订单详情', user:'我的' };
+  document.getElementById('back-btn').style.display = ['shop','confirm','detail','merchant-login','merchant'].includes(name) ? 'block' : 'none';
+  const titles = { index:'早餐到', shop:'商家详情', confirm:'确认订单', list:'我的订单', detail:'订单详情', user:'我的', 'merchant-login':'商家入驻', merchant:'商家管理' };
   document.getElementById('nav-title').textContent = titles[name] || '';
   currentPage = name;
 }
