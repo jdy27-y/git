@@ -1,0 +1,56 @@
+<!--pages/order/list.wxml-->
+<view class="container">
+  <!-- 状态标签页 -->
+  <view class="status-tabs">
+    <view class="tab {{currentStatus === '' ? 'active' : ''}}" 
+          bindtap="switchTab" data-status="">全部</view>
+    <view class="tab {{currentStatus === 'pending' ? 'active' : ''}}" 
+          bindtap="switchTab" data-status="pending">待接单</view>
+    <view class="tab {{currentStatus === 'preparing' ? 'active' : ''}}" 
+          bindtap="switchTab" data-status="preparing">备餐中</view>
+    <view class="tab {{currentStatus === 'ready' ? 'active' : ''}}" 
+          bindtap="switchTab" data-status="ready">待取餐</view>
+    <view class="tab {{currentStatus === 'completed' ? 'active' : ''}}" 
+          bindtap="switchTab" data-status="completed">已完成</view>
+  </view>
+
+  <!-- 订单列表 -->
+  <view class="order-list">
+    <view class="order-card card" wx:for="{{filteredOrders}}" wx:key="_id" 
+          bindtap="goDetail" data-id="{{item._id}}">
+      <view class="order-header">
+        <text class="shop-name">🏪 {{item.shopName}}</text>
+        <text class="order-status status-{{item.status}}">{{item.statusText}}</text>
+      </view>
+
+      <view class="order-items">
+        <text wx:for="{{item.items}}" wx:for-item="product" wx:key="productId">
+          {{product.name}} ×{{product.quantity}}{{index < item.items.length - 1 ? '、' : ''}}
+        </text>
+      </view>
+
+      <view class="order-footer">
+        <view class="order-total">
+          <text>合计：</text>
+          <text class="price">¥{{item.totalPrice}}</text>
+        </view>
+        <view class="order-time">{{item.createdAtText}}</view>
+      </view>
+
+      <!-- 取餐码 -->
+      <view class="pickup-code" wx:if="{{item.status === 'ready'}}">
+        取餐码：{{item.pickupCode}}
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{filteredOrders.length === 0 && !loading}}">
+      <text class="text">暂无订单</text>
+    </view>
+
+    <!-- 加载中 -->
+    <view class="loading" wx:if="{{loading}}">
+      <text>加载中...</text>
+    </view>
+  </view>
+</view>

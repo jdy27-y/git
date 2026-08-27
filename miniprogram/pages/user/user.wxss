@@ -1,0 +1,84 @@
+/* 个人中心页样式 */
+.user-section {
+  display: flex;
+  align-items: center;
+  padding: 40rpx 24rpx;
+}
+
+.user-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.user-avatar image {
+  width: 100%;
+  height: 100%;
+}
+
+.user-avatar.default {
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60rpx;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 34rpx;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.user-phone {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.btn-get-info {
+  background: #FF8C00;
+  color: #fff;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  padding: 0 24rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+}
+
+/* 菜单样式 */
+.menu-section, .about-section {
+  padding: 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 24rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-icon {
+  font-size: 36rpx;
+  margin-right: 20rpx;
+}
+
+.menu-text {
+  flex: 1;
+  font-size: 30rpx;
+}
+
+.menu-arrow {
+  font-size: 32rpx;
+  color: #ccc;
+}

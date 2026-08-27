@@ -1,0 +1,21 @@
+<!--pages/auth/subscribe.wxml-->
+<view class="container">
+  <view class="auth-section card">
+    <view class="auth-icon">🔔</view>
+    <view class="auth-title">开启消息通知</view>
+    <view class="auth-desc">
+      开启订阅消息后，您将收到：
+    </view>
+    <view class="auth-list">
+      <view class="auth-item">✅ 订单状态变更提醒</view>
+      <view class="auth-item">✅ 商家备餐完成通知</view>
+      <view class="auth-item">✅ 取餐时间提醒</view>
+    </view>
+
+    <button class="btn-primary" bindtap="subscribeMessage">
+      允许通知
+    </button>
+
+    <view class="skip-text" bindtap="goBack">稍后再说</view>
+  </view>
+</view>

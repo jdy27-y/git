@@ -1,0 +1,103 @@
+/* 订单详情页样式 */
+.status-section {
+  text-align: center;
+  padding: 40rpx;
+}
+
+.status-icon {
+  font-size: 80rpx;
+  margin-bottom: 16rpx;
+}
+
+.status-text {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 12rpx;
+}
+
+.pickup-code {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #ff4500;
+  margin-top: 20rpx;
+}
+
+/* 商家信息 */
+.section-title {
+  font-size: 30rpx;
+  font-weight: 500;
+  margin-bottom: 16rpx;
+}
+
+.shop-name, .shop-addr, .shop-phone {
+  font-size: 28rpx;
+  margin-bottom: 12rpx;
+}
+
+.shop-phone {
+  color: #1890ff;
+}
+
+/* 商品明细 */
+.goods-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12rpx 0;
+}
+
+.goods-name {
+  font-size: 28rpx;
+}
+
+.goods-right {
+  display: flex;
+  align-items: center;
+}
+
+.goods-price {
+  color: #ff4500;
+  margin-right: 20rpx;
+}
+
+.goods-qty {
+  color: #999;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 30rpx;
+  font-weight: 500;
+  padding-top: 12rpx;
+}
+
+/* 订单信息 */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12rpx 0;
+  font-size: 28rpx;
+}
+
+.info-row .label {
+  color: #999;
+}
+
+.info-row .value {
+  color: #333;
+}
+
+/* 操作按钮 */
+.action-area {
+  padding: 40rpx 30rpx;
+}
+
+.btn-cancel {
+  background: #fff;
+  color: #ff4d4f;
+  border: 1rpx solid #ff4d4f;
+  border-radius: 44rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+}

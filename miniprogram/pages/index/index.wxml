@@ -1,0 +1,45 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <input placeholder="搜索商家" />
+  </view>
+
+  <!-- 商家列表 -->
+  <view class="shop-list">
+    <view class="shop-card" wx:for="{{shops}}" wx:key="_id" bindtap="goShop" data-id="{{item._id}}">
+      <!-- 商家图片 -->
+      <view class="shop-avatar">
+        <image src="{{item.imageUrl || '/images/default-shop.png'}}" mode="aspectFill"></image>
+      </view>
+
+      <!-- 商家信息 -->
+      <view class="shop-info">
+        <view class="shop-name">
+          <text>{{item.name}}</text>
+          <text class="tag {{item.status === 'open' ? 'tag-open' : 'tag-closed'}}">
+            {{item.status === 'open' ? '营业中' : '已休息'}}
+          </text>
+        </view>
+        <view class="shop-meta">
+          <text class="distance">📍 {{item.distance || '未知'}}</text>
+          <text class="rating">⭐ {{item.rating || 5.0}}</text>
+        </view>
+        <view class="shop-notice" wx:if="{{item.notice}}">
+          <text>{{item.notice}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{shops.length === 0 && !loading}}">
+      <image class="icon" src="/images/empty.png" mode="aspectFit"></image>
+      <text class="text">附近暂无营业商家</text>
+    </view>
+
+    <!-- 加载中 -->
+    <view class="loading" wx:if="{{loading}}">
+      <text>加载中...</text>
+    </view>
+  </view>
+</view>

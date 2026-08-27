@@ -1,0 +1,75 @@
+<!--pages/shop/shop.wxml-->
+<view class="container">
+  <!-- 商家信息头部 -->
+  <view class="shop-header card">
+    <view class="shop-name">{{shop.name}}</view>
+    <view class="shop-status">
+      <text class="tag {{shop.status === 'open' ? 'tag-open' : 'tag-closed'}}">
+        {{shop.status === 'open' ? '营业中' : '已休息'}}
+      </text>
+      <text class="rating">⭐ {{shop.rating || 5.0}}</text>
+    </view>
+    <view class="shop-addr">📍 {{shop.address}}</view>
+    <view class="shop-hours">🕐 {{shop.businessHours.start}}-{{shop.businessHours.end}}</view>
+    <view class="shop-notice" wx:if="{{shop.notice}}">📢 {{shop.notice}}</view>
+  </view>
+
+  <!-- 分类导航 -->
+  <scroll-view class="category-nav" scroll-x>
+    <view class="category-item {{currentCategory === '' ? 'active' : ''}}" 
+          bindtap="filterCategory" data-category="">全部</view>
+    <view class="category-item {{currentCategory === item ? 'active' : ''}}" 
+          wx:for="{{categories}}" wx:key="*this" 
+          bindtap="filterCategory" data-category="{{item}}">{{item}}</view>
+  </scroll-view>
+
+  <!-- 商品列表 -->
+  <view class="product-list">
+    <view class="product-item" wx:for="{{filteredProducts}}" wx:key="_id">
+      <!-- 商品图片 -->
+      <view class="product-img">
+        <image src="{{item.imageUrl || '/images/default-product.png'}}" mode="aspectFill"></image>
+      </view>
+
+      <!-- 商品信息 -->
+      <view class="product-info">
+        <view class="product-name">{{item.name}}</view>
+        <view class="product-category">{{item.category}}</view>
+        <view class="product-bottom">
+          <view class="product-price">
+            <text class="price">¥{{item.price}}</text>
+          </view>
+          <view class="product-stock">
+            <text wx:if="{{item.stock <= 0}}" class="sold-out">已售罄</text>
+            <view class="quantity-control" wx:else>
+              <view class="btn-minus" bindtap="minusItem" data-id="{{item._id}}" 
+                    wx:if="{{item.quantity > 0}}">-</view>
+              <text class="quantity" wx:if="{{item.quantity > 0}}">{{item.quantity}}</text>
+              <view class="btn-plus" bindtap="plusItem" data-id="{{item._id}}">+</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{filteredProducts.length === 0 && !loading}}">
+      <text class="text">暂无商品</text>
+    </view>
+  </view>
+
+  <!-- 底部结算栏 -->
+  <view class="settle-bar" wx:if="{{totalCount > 0}}">
+    <view class="settle-left">
+      <view class="cart-icon" bindtap="goCart">
+        🛒
+        <view class="cart-badge">{{totalCount}}</view>
+      </view>
+      <view class="total-price">
+        <text>合计：</text>
+        <text class="price">¥{{totalPrice}}</text>
+      </view>
+    </view>
+    <view class="settle-btn" bindtap="goCheckout">去结算</view>
+  </view>
+</view>
